@@ -9,10 +9,16 @@ public class CharacterControls : MonoBehaviour
     //Ground Check
     bool isGrounded = false;
     //Constants
-    int jumpForce = 7;
-    int dashForce = 25;
-    int walkSpeed = 50;
+    public int jumpForce = 100;
+    public int fallForce = 2;
+    public int walkSpeed = 200;
+    public float RotateSpeed = 200;
+    public float jumpTimeout = 0.5f;
+
+    private float jumpedAt = 0f;
     int dashDelay = 0;    
+    int dashForce = 25;
+    
     //glitch variables
     bool flipGravity = false;
     bool dash = false;
@@ -26,35 +32,22 @@ public class CharacterControls : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded) {
+        rb.AddForce(-Vector3.up * fallForce, ForceMode.Impulse); //gravity
+        if (Input.GetKey(KeyCode.Space) && isGrounded && Time.time > jumpedAt+jumpTimeout) { //jump
+            jumpedAt = Time.time;
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        }        
-        if (Input.GetKeyDown(KeyCode.Tab)) {
-            dash = !dash;
-        }
-        
-        Vector3 m_Input = Vector3.Normalize(new Vector3(Input.GetAxis("Horizontal"), 0, (Input.GetAxis("Vertical")) )) ;
-        
-        if( !dash ){
-           // rb.MovePosition(transform.position + m_Input* Time.deltaTime * walkSpeed );
-            
-            rb.velocity = rb.velocity + m_Input * walkSpeed * Time.deltaTime;
-            rb.velocity = Vector3.ClampMagnitude(rb.velocity, walkSpeed);
-            //rb.AddForce(m_Input * walkForce, ForceMode.Impulse);
-        } else {
-            if(dashDelay == 0){
-                rb.AddForce(m_Input * dashForce, ForceMode.Impulse);
-                dashDelay = 250;
-            } else {
-                dashDelay--;
-                if(dashDelay == 180) {
-                    rb.velocity = Vector3.zero;
-                }
-            }
-            
+        }       
+         
+        if (Input.GetAxisRaw("Horizontal") < 0) { //rotate left
+            transform.Rotate(-Vector3.forward * RotateSpeed * Time.deltaTime);
+        } else if ( Input.GetAxisRaw("Horizontal") > 0) {
+            transform.Rotate(Vector3.forward * RotateSpeed * Time.deltaTime);
         }
 
+        if (!isGrounded) {
+            rb.velocity = rb.velocity + transform.right * walkSpeed * Time.deltaTime;
+            rb.velocity = Vector3.ClampMagnitude(rb.velocity, walkSpeed);
+       }
     }
 
     private void OnCollisionStay(Collision collision) {
