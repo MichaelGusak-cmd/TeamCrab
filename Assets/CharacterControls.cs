@@ -1,14 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+//using UIManager;
 
 public class CharacterControls : MonoBehaviour
 {
 
     Rigidbody rb;
-    //Vector3 start = Vector3(3,5,10);
     //Ground Check
     bool isGrounded = false;
+    public UIManager _UIManager;
     //Constants
     public int jumpForce = 100;
     public int fallForce = 2;
@@ -22,13 +23,14 @@ public class CharacterControls : MonoBehaviour
     {
         rb = gameObject.GetComponent<Rigidbody>();
         makeObjects();
+        _UIManager = GameObject.Find("Canvas").GetComponent<UIManager>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(rb.position.y < -1) {
-            reset();
+        if(rb.position.y < -5) {
+            //reset();
             die();
         }
         if(Input.GetKey(KeyCode.Tab)) {
@@ -89,6 +91,7 @@ public class CharacterControls : MonoBehaviour
         if (collision.gameObject.CompareTag("Finish")) {
             reset();
             duplicate();
+            _UIManager.updateScore();
         }
     }
 
@@ -119,8 +122,8 @@ public class CharacterControls : MonoBehaviour
 
         makeCube(new Vector3(15, 15, 15), new Vector3(-5.8f,    40,    22     ));
         makeCube(new Vector3(6, 6, 6),    new Vector3(-18.8f,   40,    4.5f   ));
-        makeCube(new Vector3(6, 6, 6),    new Vector3(-15,      40,   -6.5f   ));
-        makeCube(new Vector3(8, 8, 8),    new Vector3(1.4f,     40,    2.7f   ));
+        makeCube(new Vector3(6, 6, 6),    new Vector3(-35,      40,   -27f   ));
+        makeCube(new Vector3(8, 8, 8),    new Vector3(35f,     40,    -11f   ));
 
     }
 
