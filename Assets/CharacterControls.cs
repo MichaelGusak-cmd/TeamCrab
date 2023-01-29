@@ -6,78 +6,136 @@ public class CharacterControls : MonoBehaviour
 {
 
     Rigidbody rb;
+    //Vector3 start = Vector3(3,5,10);
     //Ground Check
     bool isGrounded = false;
     //Constants
-    int jumpForce = 7;
-    int dashForce = 25;
-    int walkSpeed = 50;
-    int dashDelay = 0;    
-    //glitch variables
-    bool flipGravity = false;
-    bool dash = false;
+    public int jumpForce = 100;
+    public int fallForce = 2;
+    public int walkSpeed = 200;
+    public float RotateSpeed = 200;
+    public float jumpTimeout = 0.5f;
+    private float jumpedAt = 0f;
 
     // Start is called before the first frame update
     void Start()
     {
         rb = gameObject.GetComponent<Rigidbody>();
+        makeObjects();
     }
 
     // Update is called once per frame
     void Update()
     {
-        
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded) {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        }        
-        if (Input.GetKeyDown(KeyCode.Tab)) {
-            dash = !dash;
+        if(rb.position.y < -1) {
+            reset();
+            die();
         }
-        
-        Vector3 m_Input = Vector3.Normalize(new Vector3(Input.GetAxis("Horizontal"), 0, (Input.GetAxis("Vertical")) )) ;
-        
-        if( !dash ){
-           // rb.MovePosition(transform.position + m_Input* Time.deltaTime * walkSpeed );
-            
-            rb.velocity = rb.velocity + m_Input * walkSpeed * Time.deltaTime;
-            rb.velocity = Vector3.ClampMagnitude(rb.velocity, walkSpeed);
-            //rb.AddForce(m_Input * walkForce, ForceMode.Impulse);
-        } else {
-            if(dashDelay == 0){
-                rb.AddForce(m_Input * dashForce, ForceMode.Impulse);
-                dashDelay = 250;
-            } else {
-                dashDelay--;
-                if(dashDelay == 180) {
-                    rb.velocity = Vector3.zero;
-                }
-            }
-            
+        if(Input.GetKey(KeyCode.Tab)) {
+            isGrounded = true;
+        }
+        if(Input.GetKey(KeyCode.R)) {
+            isGrounded = true;
         }
 
+        rb.AddForce(-Vector3.up * fallForce, ForceMode.Impulse); //gravity
+        if (Input.GetKey(KeyCode.Space) && isGrounded && Time.time > jumpedAt+jumpTimeout) { //jump
+            jumpedAt = Time.time;
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        }       
+         
+        if (Input.GetAxisRaw("Horizontal") < 0) { //rotate left
+            transform.Rotate(-Vector3.forward * RotateSpeed * Time.deltaTime);
+        } else if ( Input.GetAxisRaw("Horizontal") > 0) {
+            transform.Rotate(Vector3.forward * RotateSpeed * Time.deltaTime);
+        }
+
+        if (!isGrounded) {
+            rb.velocity = rb.velocity + transform.right * walkSpeed * Time.deltaTime;
+            rb.velocity = Vector3.ClampMagnitude(rb.velocity, walkSpeed);
+       }
     }
 
     private void OnCollisionStay(Collision collision) {
         // Check if the ball's rigidbody is colliding with the ground
-        if (!isGrounded){
-                    if (collision.gameObject.CompareTag("Ground") &&
-            Physics.Raycast(transform.position, Vector3.down, 2f, 1 << LayerMask.NameToLayer("Ground")));
-            Debug.DrawRay(transform.position, Vector3.down, Color.red, 2f, false );
-            //DrawRay(Vector3 start, Vector3 dir, Color color = Color.white, float duration = 0.0f, bool depthTest = true);
-        {
-            // Set the isGrounded variable to true
-            isGrounded = true;
-            //rb.drag = groundDrag;
-        }
+        if (true){  //!isGrounded
+            if (collision.gameObject.CompareTag("Ground") || collision.gameObject.CompareTag("Player") ) {
+                //Debug.DrawRay(transform.position, Vector3.down, Color.red, 100f); 
+                float O = 1.8f;
+                Vector3[] attempts = new [] {
+                    new Vector3(-O, 0, -O),
+                    new Vector3(-O, 0, -O),
+                    new Vector3( O, 0, -O),
+                    new Vector3(-O, 0,  O),
+                    new Vector3(-O, 0,  0),
+                    new Vector3( O, 0,  0),
+                    new Vector3( 0, 0, -O),
+                    new Vector3( 0, 0,  O)
+                };
+
+                for (int i = 0; i< 8; i++){
+                    Debug.DrawRay(transform.position + attempts[i], Vector3.down, Color.red, 100f);
+                    if ( Physics.Raycast(transform.position  + attempts[i], Vector3.down, 2f, 1 << LayerMask.NameToLayer("Ground")) ) {
+                        isGrounded = true;
+                    }
+                }    
+
+
+            }
         }
     }
+    
+    private void OnCollisionEnter(Collision collision) {
+        if (collision.gameObject.CompareTag("Finish")) {
+            reset();
+            duplicate();
+        }
+    }
+
     private void OnCollisionExit(Collision collision) {
         // Check if the ball's rigidbody is not colliding with the ground
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            // Set the isGrounded variable to true
+        if (collision.gameObject.CompareTag("Ground")) {
             isGrounded = false;
         }
+    }
+
+    private void reset(){
+        makeObjects();
+    }
+
+    private void duplicate(){
+        Rigidbody clone;
+        clone = Instantiate(rb, new Vector3(5.8f, 5f, -35.8f), Quaternion.identity);
+        clone.transform.rotation = Quaternion.Euler(-90f, -28f, 210f); ;
+        //Quaternion.Euler(-90f, -28f, 210f);
+    }
+
+    private void die(){
+        rb.position = new Vector3(5.8f, 5f, -35.8f);
+        rb.velocity = new Vector3(0,0,0);        
+    }
+
+    private void makeObjects(){
+
+        makeCube(new Vector3(15, 15, 15), new Vector3(-5.8f,    40,    22     ));
+        makeCube(new Vector3(6, 6, 6),    new Vector3(-18.8f,   40,    4.5f   ));
+        makeCube(new Vector3(6, 6, 6),    new Vector3(-15,      40,   -6.5f   ));
+        makeCube(new Vector3(8, 8, 8),    new Vector3(1.4f,     40,    2.7f   ));
+
+    }
+
+    private void makeCube(Vector3 size, Vector3 position) {
+        float r1 = Random.Range(-2f, 2f);
+        float r2 = Random.Range(-2f, 2f);
+        //float r3 = Random.Range(-2f, 2f);
+        GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        cube.transform.localScale = size;
+        //cube.transform.rotation = new Vector3(r1, r2, r3); 
+        cube.transform.position = ( position + new Vector3(r1, 0, r2) );
+        Rigidbody rb1 = cube.AddComponent(typeof(Rigidbody)) as Rigidbody;
+        rb1.mass = 100;
+        cube.tag="Ground";
+        cube.layer=6;
     }
 
 }
