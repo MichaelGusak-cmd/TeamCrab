@@ -11,9 +11,9 @@ public class CharacterControls : MonoBehaviour
     bool isGrounded = false;
     public UIManager _UIManager;
     //Constants
-    public int jumpForce = 100;
+    public int jumpForce = 20;
     public int fallForce = 2;
-    public int walkSpeed = 200;
+    public int walkSpeed = 40;
     public float RotateSpeed = 200;
     public float jumpTimeout = 0.5f;
     private float jumpedAt = 0f;
@@ -46,6 +46,15 @@ public class CharacterControls : MonoBehaviour
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }       
          
+        if (Input.GetAxisRaw("Vertical") < 0) { //rotate left
+            jumpForce = jumpForce - 4;
+            jumpForce = Mathf.Clamp(jumpForce, 10, 50);
+
+        } else if ( Input.GetAxisRaw("Vertical") > 0) {
+            jumpForce = jumpForce + 4;
+            jumpForce = Mathf.Clamp(jumpForce, 10, 50);
+        }
+
         if (Input.GetAxisRaw("Horizontal") < 0) { //rotate left
             transform.Rotate(-Vector3.forward * RotateSpeed * Time.deltaTime);
         } else if ( Input.GetAxisRaw("Horizontal") > 0) {
